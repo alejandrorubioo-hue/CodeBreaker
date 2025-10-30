@@ -13,11 +13,11 @@ export default function NavBar() {
   const path = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
- const links: LinkItem[] = [
+const links: LinkItem[] = [
   { href: "/", label: "🏠 Dashboard" },
   { href: "/puzzles", label: "🧩 Puzzles" },
-  { href: "/logros", label: "🏆 Logros" },
-  { href: "/estadisticas", label: "📊 Estadísticas" },
+  { href: "/bug-hunter", label: "🐛 Bug Hunter" },
+  { href: "/code-runner", label: "🏃‍♂️ Code Runner" },
 ];
 
   return (

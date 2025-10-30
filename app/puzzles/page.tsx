@@ -1,113 +1,52 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { puzzles } from '../data/puzzles';
 import { Puzzle } from '../types/puzzle';
-import { useGameData } from '../hooks/useGameData';
 
 export default function PuzzlesPage() {
   const [puzzleActual, setPuzzleActual] = useState(0);
   const [respuestaSeleccionada, setRespuestaSeleccionada] = useState('');
-  const [puntosPartida, setPuntosPartida] = useState(0);
+  const [puntos, setPuntos] = useState(0);
   const [mostrarResultado, setMostrarResultado] = useState(false);
-  const [juegoCompletado, setJuegoCompletado] = useState(false);
-
-  // Usar el hook para datos globales
-  const { gameData, actualizarPuntos, agregarPuzzleCompletado } = useGameData();
+  const [puzzlesCompletados, setPuzzlesCompletados] = useState<number[]>([]);
 
   const puzzle: Puzzle = puzzles[puzzleActual];
 
-  // Cargar puzzles completados al inicio
-  useEffect(() => {
-    // Si ya completó algunos puzzles, empezar donde se quedó
-    const ultimoPuzzle = Math.max(...gameData.puzzlesCompletados, 0);
-    if (ultimoPuzzle > 0 && ultimoPuzzle < puzzles.length) {
-      setPuzzleActual(ultimoPuzzle);
-    }
-  }, [gameData.puzzlesCompletados]);
-
   const verificarRespuesta = () => {
+    setMostrarResultado(true); // Primero mostrar resultado
+
     if (respuestaSeleccionada === puzzle.respuestaCorrecta) {
-      setPuntosPartida(puntosPartida + puzzle.puntos);
-
-      // Actualizar datos globales
-      actualizarPuntos(puzzle.puntos);
-      agregarPuzzleCompletado(puzzle.id);
-
-      setMostrarResultado(true);
-    } else {
-      setMostrarResultado(true);
+      setPuntos(puntos + puzzle.puntos);
+      setPuzzlesCompletados([...puzzlesCompletados, puzzle.id]);
     }
+    // NO cambiar de puzzle automáticamente
   };
 
   const siguientePuzzle = () => {
     if (puzzleActual < puzzles.length - 1) {
       setPuzzleActual(puzzleActual + 1);
-      setRespuestaSeleccionada('');
-      setMostrarResultado(false);
-    } else {
-      setJuegoCompletado(true);
+      setRespuestaSeleccionada(''); // Limpiar selección
+      setMostrarResultado(false); // Ocultar resultado
     }
   };
 
   const reiniciarJuego = () => {
     setPuzzleActual(0);
     setRespuestaSeleccionada('');
-    setPuntosPartida(0);
+    setPuntos(0);
     setMostrarResultado(false);
-    setJuegoCompletado(false);
+    setPuzzlesCompletados([]);
   };
-
-  // Si completó todos los puzzles
-  if (juegoCompletado) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center max-w-2xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6">🎉 ¡Felicidades!</h1>
-          <p className="text-xl mb-4">Has completado todos los puzzles</p>
-          <div className="bg-blue-50 rounded-lg p-6 mb-6">
-            <p className="text-2xl font-bold text-blue-600">
-              Puntos en esta sesión: {puntosPartida}
-            </p>
-            <p className="text-lg text-gray-600 mt-2">
-              Puntos totales: {gameData.puntosTotal}
-            </p>
-            <p className="text-lg text-gray-600">
-              Rango actual: {gameData.rango}
-            </p>
-          </div>
-          <button
-            onClick={reiniciarJuego}
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors text-lg"
-          >
-            🔄 Jugar de Nuevo
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header con puntos */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex justify-between items-center flex-wrap gap-4">
-          <h1 className="text-2xl font-bold">
-            🧩 Puzzle {puzzleActual + 1} de {puzzles.length}
-          </h1>
-          <div className="flex gap-4 items-center">
-            <div className="text-xl font-semibold text-blue-600">
-              ⭐ Sesión: {puntosPartida} pts
-            </div>
-            <div className="text-lg text-gray-600">
-              Total: {gameData.puntosTotal} pts
-            </div>
-            <button
-              onClick={reiniciarJuego}
-              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors"
-            >
-              🔄 Reiniciar
-            </button>
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">🧩 Puzzle {puzzleActual + 1} de {puzzles.length}</h1>
+          <div className="text-xl font-semibold text-blue-600">
+            ⭐ {puntos} puntos
           </div>
         </div>
       </div>
@@ -146,7 +85,7 @@ export default function PuzzlesPage() {
                 respuestaSeleccionada === opcion
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-300 hover:border-gray-400'
-              }`}
+              } ${mostrarResultado ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={mostrarResultado}
             >
               <code className="text-lg">{opcion}</code>
@@ -181,7 +120,7 @@ export default function PuzzlesPage() {
         )}
 
         {/* Botones de acción */}
-        <div className="flex gap-4 flex-wrap">
+        <div className="flex gap-4">
           {!mostrarResultado ? (
             <button
               onClick={verificarRespuesta}
@@ -191,12 +130,28 @@ export default function PuzzlesPage() {
               Verificar Respuesta
             </button>
           ) : (
-            <button
-              onClick={siguientePuzzle}
-              className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              {puzzleActual >= puzzles.length - 1 ? 'Ver Resultados 🏆' : 'Siguiente Puzzle →'}
-            </button>
+            <>
+              {puzzleActual < puzzles.length - 1 ? (
+                <button
+                  onClick={siguientePuzzle}
+                  className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Siguiente Puzzle →
+                </button>
+              ) : (
+                <div className="flex gap-4">
+                  <span className="bg-yellow-100 text-yellow-800 px-6 py-3 rounded-lg font-bold">
+                    🎉 ¡Juego Completado! Total: {puntos} puntos
+                  </span>
+                  <button
+                    onClick={reiniciarJuego}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    🔄 Jugar de Nuevo
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
