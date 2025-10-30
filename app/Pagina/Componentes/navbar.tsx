@@ -14,7 +14,7 @@ export default function NavBar() {
   const links: LinkItem[] = [
     { href: "/", label: "Inicio" },
     { href: "/Pagina", label: "Pagina" },
-    { href: "/variables", label: "Variables" },
+    { href: "/Variables", label: "variables" },
   ];
 
   return (
